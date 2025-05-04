@@ -17,7 +17,7 @@ class Symbol:
 class Terminal(Symbol):
     def __init__(self, value):
         super().__init__(value)
-        self.first = {value}  # FIRST de un terminal es él mismo
+        self.first = {value}  
 
 
 class NonTerminal(Symbol):
@@ -368,7 +368,7 @@ class Grammar:
                 else:
                     root = node
 
-                if rule.right != ['_']:                 # no ε
+                if rule.right != ['_']:               
                     for sym in reversed(rule.right):
                         stack.append((sym, node))
                 else:
