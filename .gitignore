@@ -1,0 +1,9 @@
+# Ignorar entorno virtual
+env/
+env*/  # Por si se llama env3, env_api, etc.
+
+# Ignorar archivos compilados de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
