@@ -11,9 +11,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ll-1-checker-web-app.vercel.app"],
-    allow_methods=["*"],
+    allow_origins=[
+        "https://ll-1-checker-web-app.vercel.app", 
+    ],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 class RuleIn(BaseModel):
