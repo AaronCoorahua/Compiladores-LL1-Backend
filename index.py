@@ -1,10 +1,11 @@
 import os
 import re
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from LL_parser import Grammar, Rule
+from google import genai
 
 app = FastAPI()
 
@@ -147,3 +148,40 @@ async def trace_tree(data: TraceInput):
         step["rule"] = step["rule"].replace("_", "ε")
     return result
 
+
+# —————— ENDPOINT CHATBOT (Gemini GenAI) ——————
+
+SYSTEM_PROMPT = """
+Eres un asistente experto en gramáticas LL(1) y respondes siempre en español.
+• Comprueba FIRST/FOLLOW y la tabla LL(1).
+• Si hay recursión izq. o conflictos, reescribe hasta que sea LL(1).
+• Devuelve sólo un bloque de código con la gramática válida.
+• La gramática debe tener la forma NonTerminal -> Token | Token, no le pongas ' ' a los tokens, cada token esta separado por espacio
+  por ejemplo ( expr ), son 3 tokens "(" "expr" ")" . Si token es un numero déjalo como numero, ejemplo no pongas zero, pon 0.
+  Y para epsilon, no pongas epsilon, pon el símbolo.
+• Los no terminales mándalos en mayúsculas, y los terminales en minúsculas siempre. Solo si no son símbolos Ejm: , ( ) ; etc.
+  Usa nombres en inglés.
+• Si no existe forma LL(1): «No es posible construir una gramática LL(1) para esa descripción.»
+• Para cualquier otra pregunta: «Lo siento, solo puedo responder preguntas sobre gramáticas LL(1).»
+"""
+
+class ChatRequest(BaseModel):
+    prompt: str
+
+class ChatResponse(BaseModel):
+    text: str
+
+@app.post("/grammar/chatbot", response_model=ChatResponse)
+def chat_bot(req: ChatRequest):
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY no está configurada")
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[
+            SYSTEM_PROMPT,
+            req.prompt
+        ],
+    )
+    return ChatResponse(text=response.text)
